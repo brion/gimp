@@ -64,13 +64,19 @@ enum
 };
 
 
-typedef struct
+typedef struct _GimpColorDisplayPrivate GimpColorDisplayPrivate;
+
+struct _GimpColorDisplayPrivate
 {
+  gboolean          enabled;
   GimpColorConfig  *config;
   GimpColorManaged *managed;
-} GimpColorDisplayPrivate;
+};
 
-#define GIMP_COLOR_DISPLAY_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GIMP_TYPE_COLOR_DISPLAY, GimpColorDisplayPrivate))
+#define GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), \
+                                                       GIMP_TYPE_COLOR_DISPLAY, \
+                                                       GimpColorDisplayPrivate))
+
 
 
 static void       gimp_color_display_constructed (GObject       *object);
@@ -107,8 +113,6 @@ gimp_color_display_class_init (GimpColorDisplayClass *klass)
   object_class->dispose      = gimp_color_display_dispose;
   object_class->set_property = gimp_color_display_set_property;
   object_class->get_property = gimp_color_display_get_property;
-
-  g_type_class_add_private (object_class, sizeof (GimpColorDisplayPrivate));
 
   g_object_class_install_property (object_class, PROP_ENABLED,
                                    g_param_spec_boolean ("enabled", NULL, NULL,
@@ -149,12 +153,16 @@ gimp_color_display_class_init (GimpColorDisplayClass *klass)
   klass->configure       = NULL;
   klass->configure_reset = NULL;
   klass->changed         = NULL;
+
+  g_type_class_add_private (object_class, sizeof (GimpColorDisplayPrivate));
 }
 
 static void
 gimp_color_display_init (GimpColorDisplay *display)
 {
-  display->enabled = FALSE;
+  GimpColorDisplayPrivate *private = GET_PRIVATE (display);
+
+  private->enabled = FALSE;
 }
 
 static void
@@ -169,7 +177,7 @@ gimp_color_display_constructed (GObject *object)
 static void
 gimp_color_display_dispose (GObject *object)
 {
-  GimpColorDisplayPrivate *private = GIMP_COLOR_DISPLAY_GET_PRIVATE (object);
+  GimpColorDisplayPrivate *private = GET_PRIVATE (object);
 
   if (private->config)
     {
@@ -198,12 +206,13 @@ gimp_color_display_set_property (GObject      *object,
                                  const GValue *value,
                                  GParamSpec   *pspec)
 {
-  GimpColorDisplay *display = GIMP_COLOR_DISPLAY (object);
+  GimpColorDisplay        *display = GIMP_COLOR_DISPLAY (object);
+  GimpColorDisplayPrivate *private = GET_PRIVATE (object);
 
   switch (property_id)
     {
     case PROP_ENABLED:
-      display->enabled = g_value_get_boolean (value);
+      private->enabled = g_value_get_boolean (value);
       break;
 
     case PROP_COLOR_CONFIG:
@@ -228,22 +237,20 @@ gimp_color_display_get_property (GObject    *object,
                                  GValue     *value,
                                  GParamSpec *pspec)
 {
-  GimpColorDisplay *display = GIMP_COLOR_DISPLAY (object);
+  GimpColorDisplayPrivate *private = GET_PRIVATE (object);
 
   switch (property_id)
     {
     case PROP_ENABLED:
-      g_value_set_boolean (value, display->enabled);
+      g_value_set_boolean (value, private->enabled);
       break;
 
     case PROP_COLOR_CONFIG:
-      g_value_set_object (value,
-                          GIMP_COLOR_DISPLAY_GET_PRIVATE (display)->config);
+      g_value_set_object (value, private->config);
       break;
 
     case PROP_COLOR_MANAGED:
-      g_value_set_object (value,
-                          GIMP_COLOR_DISPLAY_GET_PRIVATE (display)->managed);
+      g_value_set_object (value, private->managed);
       break;
 
     default:
@@ -256,7 +263,7 @@ static void
 gimp_color_display_set_color_config (GimpColorDisplay *display,
                                      GimpColorConfig  *config)
 {
-  GimpColorDisplayPrivate *private = GIMP_COLOR_DISPLAY_GET_PRIVATE (display);
+  GimpColorDisplayPrivate *private = GET_PRIVATE (display);
 
   g_return_if_fail (private->config == NULL);
 
@@ -274,7 +281,7 @@ static void
 gimp_color_display_set_color_managed (GimpColorDisplay *display,
                                       GimpColorManaged *managed)
 {
-  GimpColorDisplayPrivate *private = GIMP_COLOR_DISPLAY_GET_PRIVATE (display);
+  GimpColorDisplayPrivate *private = GET_PRIVATE (display);
 
   g_return_if_fail (private->managed == NULL);
 
@@ -320,12 +327,10 @@ gimp_color_display_clone (GimpColorDisplay *display)
 
       if (clone)
         {
-          GimpColorDisplayPrivate *private;
-
-          private = GIMP_COLOR_DISPLAY_GET_PRIVATE (display);
+          GimpColorDisplayPrivate *private = GET_PRIVATE (display);
 
           g_object_set (clone,
-                        "enabled",       display->enabled,
+                        "enabled",       private->enabled,
                         "color-managed", private->managed,
                         NULL);
         }
@@ -351,10 +356,14 @@ gimp_color_display_convert_buffer (GimpColorDisplay *display,
                                    GeglBuffer       *buffer,
                                    GeglRectangle    *area)
 {
+  GimpColorDisplayPrivate *private;
+
   g_return_if_fail (GIMP_IS_COLOR_DISPLAY (display));
   g_return_if_fail (GEGL_IS_BUFFER (buffer));
 
-  if (display->enabled &&
+  private = GET_PRIVATE (display);
+
+  if (private->enabled &&
       GIMP_COLOR_DISPLAY_GET_CLASS (display)->convert_buffer)
     {
       GIMP_COLOR_DISPLAY_GET_CLASS (display)->convert_buffer (display, buffer,
@@ -377,12 +386,16 @@ void
 gimp_color_display_convert_surface (GimpColorDisplay *display,
                                     cairo_surface_t  *surface)
 {
+  GimpColorDisplayPrivate *private;
+
   g_return_if_fail (GIMP_IS_COLOR_DISPLAY (display));
   g_return_if_fail (surface != NULL);
   g_return_if_fail (cairo_surface_get_type (surface) ==
                     CAIRO_SURFACE_TYPE_IMAGE);
 
-  if (display->enabled &&
+  private = GET_PRIVATE (display);
+
+  if (private->enabled &&
       GIMP_COLOR_DISPLAY_GET_CLASS (display)->convert_surface)
     {
       cairo_surface_flush (surface);
@@ -412,11 +425,15 @@ gimp_color_display_convert (GimpColorDisplay *display,
                             gint               bpp,
                             gint               bpl)
 {
+  GimpColorDisplayPrivate *private;
+
   g_return_if_fail (GIMP_IS_COLOR_DISPLAY (display));
+
+  private = GET_PRIVATE (display);
 
   /*  implementing the convert method is deprecated
    */
-  if (display->enabled && GIMP_COLOR_DISPLAY_GET_CLASS (display)->convert)
+  if (private->enabled && GIMP_COLOR_DISPLAY_GET_CLASS (display)->convert)
     GIMP_COLOR_DISPLAY_GET_CLASS (display)->convert (display, buf,
                                                      width, height,
                                                      bpp, bpl);
@@ -509,9 +526,13 @@ void
 gimp_color_display_set_enabled (GimpColorDisplay *display,
                                 gboolean          enabled)
 {
+  GimpColorDisplayPrivate *private;
+
   g_return_if_fail (GIMP_IS_COLOR_DISPLAY (display));
 
-  if (enabled != display->enabled)
+  private = GET_PRIVATE (display);
+
+  if (enabled != private->enabled)
     {
       g_object_set (display,
                     "enabled", enabled,
@@ -524,7 +545,7 @@ gimp_color_display_get_enabled (GimpColorDisplay *display)
 {
   g_return_val_if_fail (GIMP_IS_COLOR_DISPLAY (display), FALSE);
 
-  return display->enabled;
+  return GET_PRIVATE (display)->enabled;
 }
 
 /**
@@ -540,7 +561,7 @@ gimp_color_display_get_config (GimpColorDisplay *display)
 {
   g_return_val_if_fail (GIMP_IS_COLOR_DISPLAY (display), NULL);
 
-  return GIMP_COLOR_DISPLAY_GET_PRIVATE (display)->config;
+  return GET_PRIVATE (display)->config;
 }
 
 /**
@@ -556,5 +577,5 @@ gimp_color_display_get_managed (GimpColorDisplay *display)
 {
   g_return_val_if_fail (GIMP_IS_COLOR_DISPLAY (display), NULL);
 
-  return GIMP_COLOR_DISPLAY_GET_PRIVATE (display)->managed;
+  return GET_PRIVATE (display)->managed;
 }
