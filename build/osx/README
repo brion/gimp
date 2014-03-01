@@ -1,0 +1,39 @@
+The recommended way to build Gimp for Mac OS X is using jhbuild, configured with a base module set maintained in gtk-osx.
+
+General documentation on building GTK+ for OS X:
+https://wiki.gnome.org/Projects/GTK+/OSX/Building
+
+
+Environment:
+
+Beware that MacPorts, Homebrew etc may interfere with the jhbuild environment. Keep these out of your shell environment when building with jhbuild.
+
+Also avoid having directories with spaces in your PATH; this can cause build failures in some modules.
+
+
+First steps:
+
+  $ curl -O https://git.gnome.org/browse/gtk-osx/plain/gtk-osx-build-setup.sh
+  $ sh gtk-osx-build-setup.sh
+
+This will fetch the current version of jhbuild with the gtk-osx module sets, installing jhbuild into ~/.local/ -- so make sure ~/.local/bin is in your PATH for later.
+
+If using the 10.9 SDK, note that Apple has dropped python from the SDK copy of the libraries as they now discourage linking against the system python. You'll have to enable a local python build; edit .jhbuildrc-custom and uncomment this line:
+
+  # _gtk_osx_use_jhbuild_python = True
+
+
+Now, bootstrap the gtk-osx stuff...
+
+  $ jhbuild bootstrap
+  $ jhbuild build python # explicit since it's not in the deps
+  $ jhbuild build meta-gtk-osx-bootstrap
+  $ jhbuild build
+
+Get a coffee, this will take a while.
+
+
+[need to get updated versions of the gimp module files from old stable branch]
+
+
+[need to figure out the app bundling]
