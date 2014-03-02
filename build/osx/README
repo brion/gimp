@@ -18,22 +18,53 @@ First steps:
 
 This will fetch the current version of jhbuild with the gtk-osx module sets, installing jhbuild into ~/.local/ -- so make sure ~/.local/bin is in your PATH for later.
 
-If using the 10.9 SDK, note that Apple has dropped python from the SDK copy of the libraries as they now discourage linking against the system python. You'll have to enable a local python build; edit .jhbuildrc-custom and uncomment this line:
+If using the 10.9 SDK, note that Apple has dropped python from the SDK copy of the libraries as they now discourage linking against the system python. You'll have to enable a local python build; edit .jhbuildrc-custom and add:
 
-  # _gtk_osx_use_jhbuild_python = True
+  _gtk_osx_use_jhbuild_python = True
+
+To build the master branch of gimp and its dependencies, enable the unstable module sets. Add to .jhbuildrc-custom:
+
+  moduleset = 'http://git.gnome.org/browse/gtk-osx/plain/modulesets-unstable/gtk-osx.modules'
 
 
-Now, bootstrap the gtk-osx stuff...
+Now, bootstrap the main GTK+ libraries...
 
   $ jhbuild bootstrap
-  $ jhbuild build python # explicit since it's not in the deps
+  $ jhbuild build python2.7 # explicit since it's not in the deps
   $ jhbuild build meta-gtk-osx-bootstrap
-  $ jhbuild build
 
-Get a coffee, this will take a while.
+Because there's currently a circular dependency between harfbuzz and freetype <https://bugzilla.freedesktop.org/show_bug.cgi?id=75652> you'll have to temporarily jump through some hoops to build a few packages. Edit ~/.jhbuildrc-custom and add this line:
+
+  append_autogenargs('freetype', '--without-harfbuzz')
+
+Now, let's build freetype:
+
+  $ jhbuild build freetype
+
+Now for a fun part. Edit ~/gtk/inst/lib/pkgconfig/freetype2.pc and remove the 'harfbuzz >= 0.9.19' from this line:
+
+  Requires.private: libpng, harfbuzz >= 0.9.19
+
+Now, we can build fontconfig and harfbuzz:
+
+  $ jhbuild build harfbuzz
+
+Now edit ~/.jhbuildrc-custom again and REMOVE that line from above... Got it? Great! Now we can rebuild freetype with its harfbuzz support enabled:
+
+  $ jhbuild buildone --force --distclean freetype
 
 
-[need to get updated versions of the gimp module files from old stable branch]
+
+
+Now let's get to the main event!
+
+  $ jhbuild build gimp
+
+
+^ this will probably fail somewhere, haven't got that far yet
 
 
 [need to figure out the app bundling]
+
+
+
