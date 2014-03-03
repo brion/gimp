@@ -64,7 +64,31 @@ Now let's get to the main event!
 ^ this will probably fail somewhere, haven't got that far yet
 
 
+
+# sighhhhhh trying on 'stable'
+
+Babl fails to build with clang on 10.9 <https://bugzilla.gnome.org/show_bug.cgi?id=725530>. Workaround: add to .jhbuildrc-custom:
+
+  append_autogenargs('babl', '--disable-sse')
+
+We also need a patch for gimp <https://bugzilla.gnome.org/show_bug.cgi?id=725531>, hopefully this will merge soon.
+
+Now let's build...
+
+  $ jhbuild bootstrap
+  $ jhbuild build python # explicit since it's not in the deps
+  $ jhbuild build meta-gtk-osx-bootstrap
+  $ jhbuild build meta-gtk-osx-freetype
+  $ jhbuild build meta-gtk-osx-core
+  $ jhbuild build gimp
+	
+What's that, it worked! Launch it!
+
+  $ jhbuild run gimp
+
+Neat!
+
+
+Bundling:
+
 [need to figure out the app bundling]
-
-
-
