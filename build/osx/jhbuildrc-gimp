@@ -1,0 +1,10 @@
+# -*- mode: python -*-
+
+import sys
+
+checkoutroot = os.path.expanduser("~/gimp/source")
+prefix = os.path.expanduser("~/gimp/inst")
+tarballdir = os.path.expanduser("~/gimp/pkgs")
+
+# Main module set
+moduleset = os.path.expanduser("~/gimp/directory/gimp.modules")

@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE moduleset SYSTEM "moduleset.dtd">
+<?xml-stylesheet type="text/xsl" href="moduleset.xsl"?>
+<moduleset>
+  <include href="http://git.gnome.org/browse/gtk-osx/plain/modulesets-stable/gtk-osx.modules"/>
+
+  <repository type="git" name="git.gnome.org"
+              href="git://git.gnome.org/"/>
+
+  <!-- Master -->
+  <autotools id="gimp" 
+             autogenargs="--disable-python --disable-print --without-x
+                          --without-dbus --without-gnomevfs --without-wmf"
+             makeargs='LDFLAGS="-framework Carbon"'>
+    <branch repo="git.gnome.org"
+	    module="gimp"
+	    checkoutdir="gimp"/>
+    <after>
+      <dep package="meta-gtk-osx-bootstrap"/>
+      <dep package="meta-gtk-osx-core"/>
+    </after>
+    <dependencies>
+      <dep package="lcms"/>
+      <dep package="fontconfig"/>
+      <dep package="gegl"/>
+      <dep package="gexiv2"/>
+    </dependencies>
+  </autotools>
+
+  <autotools id="babl">
+    <branch repo="git.gnome.org"
+	    module="babl"
+	    checkoutdir="babl"/>
+  </autotools>
+
+  <autotools id="gegl" autogen-args="--disable-docs">
+    <branch repo="git.gnome.org"
+	    module="gegl"
+	    checkoutdir="gegl"/>
+    <dependencies>
+      <dep package="babl"/>
+    </dependencies>
+  </autotools>
+
+
+  <!-- gtk3-port branch -->
+  
+  <autotools id="gimp-2.99" 
+             autogenargs="--disable-python --disable-print --without-x
+                          --without-dbus --without-gnomevfs --without-wmf"
+             makeargs='LDFLAGS="-framework Carbon"'>
+    <branch repo="git.gnome.org"
+	    module="gimp"
+	    revision="gtk3-port"
+	    checkoutdir="gimp-gtk3"/>
+    <after>
+      <dep package="meta-gtk-osx-bootstrap"/>
+      <dep package="meta-gtk-osx-core"/>
+    </after>
+    <dependencies>
+      <dep package="lcms"/>
+      <dep package="fontconfig"/>
+      <dep package="gegl-gtk3"/>
+    </dependencies>
+  </autotools>
+
+  <!-- gtk3-port isn't kept fully up to date -->
+  <autotools id="gegl-gtk3" autogen-args="--disable-docs">
+    <branch repo="git.gnome.org"
+	    module="gegl"
+	    revision="f50adad39ebec"
+	    checkoutdir="gegl-gtk3"/>
+    <dependencies>
+      <dep package="babl"/>
+    </dependencies>
+  </autotools>
+  
+  
+  <!-- Various dependencies -->
+  
+   <repository type="tarball" name="ftp.gnome.org"
+	      href="http://ftp.gnome.org/pub/gnome/sources/"/>
+
+
+  <!-- for gexiv2 0.7.0 we need to pass --prefix=foo not --prefix foo -->
+  <autotools id="gexiv2"
+            autogen-sh="configure"
+            autogen-template="%(srcdir)s/%(autogen-sh)s --prefix=%(prefix)s --libdir %(libdir)s %(autogenargs)s">
+    <branch module="gexiv2/0.7/gexiv2-0.7.0.tar.xz"
+            version="0.7.0"
+	    checkoutdir="libgexiv2-0.7.0"
+            repo="ftp.gnome.org">
+    </branch>
+    <dependencies>
+      <dep package="exiv2"/>
+      <dep package="glib"/>
+      <dep package="gobject-introspection"/>
+    </dependencies>
+  </autotools>
+
+  <repository type="tarball" name="exiv2"
+	      href="http://www.exiv2.org/"/>
+
+  <autotools id="exiv2"
+             autogen-sh="configure">
+    <branch module="exiv2-0.23.tar.gz"
+            version="0.23"
+            repo="exiv2"/>
+    <dependencies>
+    </dependencies>
+  </autotools>
+
+</moduleset>

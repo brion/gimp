@@ -89,6 +89,23 @@ What's that, it worked! Launch it!
 Neat!
 
 
+
+# Ok now with our customized module sets
+
+  $ cp jhbuildrc-gimp ~/.jhbuildrc-gimp
+  $ mkdir ~/gimp/directory && cp gimp.modules ~/gimp/directory/gimp.modules
+  $ JHB=gimp jhbuild bootstrap
+  $ JHB=gimp jhbuild build python # explicit since it's not in the deps
+  $ JHB=gimp jhbuild build meta-gtk-osx-bootstrap
+  $ JHB=gimp jhbuild build meta-gtk-osx-freetype
+  $ JHB=gimp jhbuild build meta-gtk-osx-core
+  $ JHB=gimp jhbuild build gimp
+
+and run it!
+
+  $ JHB=gimp jhbuild run gimp-2.9
+
+
 Bundling:
 
 [need to figure out the app bundling]
